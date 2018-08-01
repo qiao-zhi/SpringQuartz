@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+xmlns="http://www.springframework.org/schema/beans" 
+xmlns:context="http://www.springframework.org/schema/context" 
+xmlns:aop="http://www.springframework.org/schema/aop" 
+xmlns:tx="http://www.springframework.org/schema/tx" 
+xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.0.xsd http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.0.xsd ">
+	<!-- 扫描@Controler @Service -->
+	<context:component-scan base-package="cn.qlq" />
+	
+	<!-- 1.JobDatail的两种创建方式 -->
+	<!--第一种: 用MethodInvokingJobDetailFactoryBean创建第一个简单的JobDetail，执行FirstBean的 printMessage方法 -->
+	<bean id="simpleJobDetail"
+		class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+		<property name="targetObject" ref="firstBean" />
+		<property name="targetMethod" value="printMessage" />
+	</bean>
+	<bean id="fetchDataJobDetail"
+		class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+		<property name="targetObject" ref="fetchData" />
+		<property name="targetMethod" value="work" />
+	</bean>
+	<!--第二种:用JobDetailFactoryBean创建一个jobDetail -->
+	<bean id="firstComplexJobDetail"
+		class="org.springframework.scheduling.quartz.JobDetailFactoryBean">
+		<!-- 指明QuartzJobBean的类全路径 -->
+		<property name="jobClass" value="cn.qlq.quartz.FirstScheduledJob" />
+		<!-- 使用jobDataMap传入数据(map的key与属性名相同且属性要有set方法) -->
+		<property name="jobDataMap">
+			<map>
+				<entry key="secondBean" value-ref="secondBean" />
+			</map>
+		</property>
+		<property name="Durability" value="true" />
+	</bean>
+
+	<!-- 2.两种Trigger的创建-->
+	<!-- 第一种: 距离当前时间1秒之后执行，之后每隔两秒钟执行一次(SimpleTrigger用法) -->
+	<bean id="mySimpleTrigger" class="org.springframework.scheduling.quartz.SimpleTriggerFactoryBean">
+	    <property name="jobDetail"  ref="simpleJobDetail"/>
+	    <property name="startDelay"  value="1000"/>
+	    <property name="repeatInterval"  value="2000"/>
+	</bean>
+	<!-- 第二种:每隔5秒钟执行一次  (CronTrigger用法)-->
+	<bean id="myCronTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">
+	    <property name="jobDetail"  ref="firstComplexJobDetail"/>
+	    <property name="cronExpression"  value="0/5 * * ? * *"/>
+	</bean>
+	<bean id="fetchDataTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">
+	    <property name="jobDetail"  ref="fetchDataJobDetail"/>
+	    <property name="cronExpression"  value="0/5 * * ? * *"/>
+	</bean>
+
+	<!-- 3. 两种 scheduler的创建方式。二选一即可-->
+	<!-- 第一种:Schduler的创建以及指定jobDetail和trigger-->
+ 	<bean class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
+	    <property name="jobDetails">
+	        <list>
+	            <ref bean="simpleJobDetail"/>
+	            <ref bean="firstComplexJobDetail"/>
+	        </list>
+	    </property>
+	    <property name="triggers">
+	        <list>
+	            <ref bean="mySimpleTrigger"/>
+	            <ref bean="myCronTrigger"/>
+	        </list>
+	    </property>
+	</bean>
+	<!--第二种方式:只指定trigger  -->
+	<bean class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
+		<property name="triggers">
+			<list>
+				<ref bean="fetchDataTrigger"/>
+				<!--<ref bean="fetchDataTrigger2"/> -->
+			</list>
+		</property>
+	</bean>
+</beans>
