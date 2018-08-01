@@ -56,7 +56,7 @@ public class HttpUtils {
 	 * 
 	 * @return
 	 */
-	public static String doGet(String url, Map params) {
+	public static String doGet(String url) {
 		try {
 			HttpClient client = new DefaultHttpClient();
 			// 发送get请求
